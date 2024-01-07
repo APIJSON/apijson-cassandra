@@ -46,13 +46,20 @@ import static apijson.orm.AbstractSQLExecutor.KEY_RAW_LIST;
 public class CassandraUtil {
     public static final String TAG = "CassandraUtil";
 
+    public static <T> String getClientKey(@NotNull SQLConfig<T> config) {
+        String uri = config.getDBUri();
+        return uri + (uri.contains("?") ? "&" : "?") + "username=" + config.getDBAccount();
+    }
+
     public static final Map<String, CqlSession> CLIENT_MAP = new LinkedHashMap<>();
     public static <T> CqlSession getSession(@NotNull SQLConfig<T> config) throws MalformedURLException {
-        String uri = config.getDBUri();
-        String key = uri + (uri.contains("?") ? "&" : "?") + "username=" + config.getDBAccount();
+        return getSession(config, true);
+    }
+    public static <T> CqlSession getSession(@NotNull SQLConfig<T> config, boolean autoNew) throws MalformedURLException {
+        String key = getClientKey(config);
 
         CqlSession session = CLIENT_MAP.get(key);
-        if (session == null) {
+        if (autoNew && session == null) {
             session = CqlSession.builder()
 //                        .withCloudSecureConnectBundle(Paths.get("/path/to/secure-connect-database_name.zip"))
                     .withCloudSecureConnectBundle(new URL(config.getDBUri()))
@@ -66,14 +73,13 @@ public class CassandraUtil {
     }
 
     public static <T> void closeSession(@NotNull SQLConfig<T> config) throws MalformedURLException {
-        CqlSession conn = getSession(config);
-        if (conn != null) {
-            String uri = config.getDBUri();
-            String key = uri + (uri.contains("?") ? "&" : "?") + "username=" + config.getDBAccount();
+        CqlSession session = getSession(config, false);
+        if (session != null) {
+            String key = getClientKey(config);
             CLIENT_MAP.remove(key);
 
 //            try {
-                conn.close();
+                session.close();
 //            }
 //            catch (Throwable e) {
 //                e.printStackTrace();
