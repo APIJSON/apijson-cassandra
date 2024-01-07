@@ -36,7 +36,7 @@ import static apijson.orm.AbstractSQLExecutor.KEY_RAW_LIST;
  * @see DemoSQLExecutor 重写 execute 方法：
  *     \@Override
  *      public JSONObject execute(@NotNull SQLConfig<Long> config, boolean unknownType) throws Exception {
- *          if (config.isMilvus()) {
+ *          if (config.isCassandra()) {
  *              return CassandraUtil.execute(config, null, unknownType);
  *          }
  *
